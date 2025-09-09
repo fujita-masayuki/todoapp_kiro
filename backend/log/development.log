@@ -1,0 +1,54 @@
+  [1m[35m (8.8ms)[0m  [1m[35mCREATE DATABASE `todo_app_development` DEFAULT CHARACTER SET `utf8mb4` /*application='Backend'*/[0m
+  [1m[35m (11.6ms)[0m  [1m[35mCREATE TABLE `schema_migrations` (`version` varchar(255) NOT NULL PRIMARY KEY) /*application='Backend'*/[0m
+  [1m[35m (8.9ms)[0m  [1m[35mCREATE TABLE `ar_internal_metadata` (`key` varchar(255) NOT NULL PRIMARY KEY, `value` varchar(255), `created_at` datetime(6) NOT NULL, `updated_at` datetime(6) NOT NULL) /*application='Backend'*/[0m
+  [1m[35mSQL (0.1ms)[0m  [1m[34mSELECT GET_LOCK('8535192876944776140', 0) /*application='Backend'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Load (1.6ms)[0m  [1m[34mSELECT `schema_migrations`.`version` FROM `schema_migrations` ORDER BY `schema_migrations`.`version` ASC /*application='Backend'*/[0m
+  [1m[36mActiveRecord::InternalMetadata Load (0.3ms)[0m  [1m[34mSELECT * FROM `ar_internal_metadata` WHERE `ar_internal_metadata`.`key` = 'environment' ORDER BY `ar_internal_metadata`.`key` ASC LIMIT 1 /*application='Backend'*/[0m
+  [1m[36mActiveRecord::InternalMetadata Create (1.1ms)[0m  [1m[32mINSERT INTO `ar_internal_metadata` (`key`, `value`, `created_at`, `updated_at`) VALUES ('environment', 'development', '2025-08-15 09:04:19.444776', '2025-08-15 09:04:19.444778') /*application='Backend'*/[0m
+Migrating to CreateTodos (20250815000001)
+  [1m[35m (7.8ms)[0m  [1m[35mCREATE TABLE `todos` (`id` bigint NOT NULL AUTO_INCREMENT PRIMARY KEY, `title` varchar(255) NOT NULL, `completed` tinyint(1) DEFAULT FALSE, `created_at` datetime(6) NOT NULL, `updated_at` datetime(6) NOT NULL) /*application='Backend'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.8ms)[0m  [1m[32mINSERT INTO `schema_migrations` (`version`) VALUES ('20250815000001') /*application='Backend'*/[0m
+  [1m[35mSQL (0.2ms)[0m  [1m[34mSELECT RELEASE_LOCK('8535192876944776140') /*application='Backend'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.1ms)[0m  [1m[34mSELECT `schema_migrations`.`version` FROM `schema_migrations` ORDER BY `schema_migrations`.`version` ASC /*application='Backend'*/[0m
+[ActionDispatch::HostAuthorization::DefaultResponseApp] Blocked hosts: backend:3000
+Started GET "/api/v1/todos" for 192.168.65.1 at 2025-08-15 09:04:24 +0000
+  [1m[36mActiveRecord::SchemaMigration Load (0.1ms)[0m  [1m[34mSELECT `schema_migrations`.`version` FROM `schema_migrations` ORDER BY `schema_migrations`.`version` ASC /*application='Backend'*/[0m
+Processing by Api::V1::TodosController#index as */*
+  [1m[36mTodo Load (2.4ms)[0m  [1m[34mSELECT `todos`.* FROM `todos` /*action='index',application='Backend',controller='todos'*/[0m
+  ↳ app/controllers/api/v1/todos_controller.rb:6:in `index'
+Completed 200 OK in 44ms (Views: 1.2ms | ActiveRecord: 2.6ms (1 query, 0 cached) | GC: 0.6ms)
+
+
+Started GET "/api/v1/todos" for 192.168.65.1 at 2025-08-15 09:04:24 +0000
+Processing by Api::V1::TodosController#index as */*
+  [1m[36mTodo Load (0.3ms)[0m  [1m[34mSELECT `todos`.* FROM `todos` /*action='index',application='Backend',controller='todos'*/[0m
+  ↳ app/controllers/api/v1/todos_controller.rb:6:in `index'
+Completed 200 OK in 1ms (Views: 0.8ms | ActiveRecord: 0.3ms (1 query, 0 cached) | GC: 0.1ms)
+
+
+Started POST "/api/v1/todos" for 192.168.65.1 at 2025-08-15 09:04:31 +0000
+Processing by Api::V1::TodosController#create as */*
+  Parameters: {"todo"=>{"title"=>"タスク１", "completed"=>false}}
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*action='create',application='Backend',controller='todos'*/[0m
+  ↳ app/controllers/api/v1/todos_controller.rb:16:in `create'
+  [1m[36mTodo Create (2.6ms)[0m  [1m[32mINSERT INTO `todos` (`title`, `completed`, `created_at`, `updated_at`) VALUES ('タスク１', FALSE, '2025-08-15 09:04:31.810070', '2025-08-15 09:04:31.810070') /*action='create',application='Backend',controller='todos'*/[0m
+  ↳ app/controllers/api/v1/todos_controller.rb:16:in `create'
+  [1m[36mTRANSACTION (4.3ms)[0m  [1m[35mCOMMIT /*action='create',application='Backend',controller='todos'*/[0m
+  ↳ app/controllers/api/v1/todos_controller.rb:16:in `create'
+Completed 201 Created in 27ms (Views: 0.5ms | ActiveRecord: 11.7ms (1 query, 0 cached) | GC: 1.5ms)
+
+
+Started DELETE "/api/v1/todos/1" for 192.168.65.1 at 2025-08-15 09:04:33 +0000
+Processing by Api::V1::TodosController#destroy as */*
+  Parameters: {"id"=>"1"}
+  [1m[36mTodo Load (0.6ms)[0m  [1m[34mSELECT `todos`.* FROM `todos` WHERE `todos`.`id` = 1 LIMIT 1 /*action='destroy',application='Backend',controller='todos'*/[0m
+  ↳ app/controllers/api/v1/todos_controller.rb:39:in `set_todo'
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN /*action='destroy',application='Backend',controller='todos'*/[0m
+  ↳ app/controllers/api/v1/todos_controller.rb:32:in `destroy'
+  [1m[36mTodo Destroy (1.6ms)[0m  [1m[31mDELETE FROM `todos` WHERE `todos`.`id` = 1 /*action='destroy',application='Backend',controller='todos'*/[0m
+  ↳ app/controllers/api/v1/todos_controller.rb:32:in `destroy'
+  [1m[36mTRANSACTION (1.4ms)[0m  [1m[35mCOMMIT /*action='destroy',application='Backend',controller='todos'*/[0m
+  ↳ app/controllers/api/v1/todos_controller.rb:32:in `destroy'
+Completed 204 No Content in 15ms (ActiveRecord: 3.8ms (2 queries, 0 cached) | GC: 0.0ms)
+
+
