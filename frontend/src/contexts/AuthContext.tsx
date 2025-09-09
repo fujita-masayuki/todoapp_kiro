@@ -35,10 +35,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const savedUser = localStorage.getItem(USER_KEY);
         
         if (savedToken && savedUser) {
-          setToken(savedToken);
-          setUser(JSON.parse(savedUser));
-          // APIクライアントにトークンを設定
-          authApi.setToken(savedToken);
+          // JSONパースの前にデータの妥当性をチェック
+          if (savedUser.trim().startsWith('{') && savedUser.trim().endsWith('}')) {
+            const parsedUser = JSON.parse(savedUser);
+            // ユーザーオブジェクトの基本的な構造をチェック
+            if (parsedUser && typeof parsedUser === 'object' && parsedUser.id && parsedUser.email) {
+              setToken(savedToken);
+              setUser(parsedUser);
+              // APIクライアントにトークンを設定
+              authApi.setToken(savedToken);
+            } else {
+              throw new Error('Invalid user data structure');
+            }
+          } else {
+            throw new Error('Invalid JSON format in localStorage');
+          }
         }
       } catch (error) {
         console.error('Error restoring auth state:', error);

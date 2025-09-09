@@ -20,7 +20,7 @@ class Api::V1::TodosController < ApplicationController
     if @todo.save
       render json: @todo, status: :created
     else
-      render json: @todo.errors, status: :unprocessable_entity
+      render json: @todo.errors, status: :unprocessable_content
     end
   end
 
@@ -28,7 +28,7 @@ class Api::V1::TodosController < ApplicationController
     if @todo.update(todo_params)
       render json: @todo
     else
-      render json: @todo.errors, status: :unprocessable_entity
+      render json: @todo.errors, status: :unprocessable_content
     end
   end
 

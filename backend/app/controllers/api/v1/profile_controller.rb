@@ -6,7 +6,6 @@ class Api::V1::ProfileController < ApplicationController
     render json: {
       id: current_user.id,
       email: current_user.email,
-      name: current_user.name,
       created_at: current_user.created_at
     }
   end
@@ -16,17 +15,16 @@ class Api::V1::ProfileController < ApplicationController
       render json: {
         id: current_user.id,
         email: current_user.email,
-        name: current_user.name,
         updated_at: current_user.updated_at
       }
     else
-      render json: { errors: current_user.errors }, status: :unprocessable_entity
+      render json: { errors: current_user.errors }, status: :unprocessable_content
     end
   end
 
   private
 
   def profile_params
-    params.require(:user).permit(:name, :email)
+    params.require(:user).permit(:email)
   end
 end

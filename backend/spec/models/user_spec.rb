@@ -47,25 +47,25 @@ RSpec.describe User, type: :model do
       it 'rejects passwords without uppercase letters' do
         user = build(:user, password: 'password123!', password_confirmation: 'password123!')
         expect(user).not_to be_valid
-        expect(user.errors[:password]).to include('must include at least one lowercase letter, one uppercase letter, one digit, and one special character')
+        expect(user.errors[:password]).to include('は大文字・小文字・数字・特殊文字（@$!%*?&）をそれぞれ1文字以上含む必要があります')
       end
 
       it 'rejects passwords without lowercase letters' do
         user = build(:user, password: 'PASSWORD123!', password_confirmation: 'PASSWORD123!')
         expect(user).not_to be_valid
-        expect(user.errors[:password]).to include('must include at least one lowercase letter, one uppercase letter, one digit, and one special character')
+        expect(user.errors[:password]).to include('は大文字・小文字・数字・特殊文字（@$!%*?&）をそれぞれ1文字以上含む必要があります')
       end
 
       it 'rejects passwords without numbers' do
         user = build(:user, password: 'Password!', password_confirmation: 'Password!')
         expect(user).not_to be_valid
-        expect(user.errors[:password]).to include('must include at least one lowercase letter, one uppercase letter, one digit, and one special character')
+        expect(user.errors[:password]).to include('は大文字・小文字・数字・特殊文字（@$!%*?&）をそれぞれ1文字以上含む必要があります')
       end
 
       it 'rejects passwords without special characters' do
         user = build(:user, password: 'Password123', password_confirmation: 'Password123')
         expect(user).not_to be_valid
-        expect(user.errors[:password]).to include('must include at least one lowercase letter, one uppercase letter, one digit, and one special character')
+        expect(user.errors[:password]).to include('は大文字・小文字・数字・特殊文字（@$!%*?&）をそれぞれ1文字以上含む必要があります')
       end
     end
   end

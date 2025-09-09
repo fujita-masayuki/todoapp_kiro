@@ -6,7 +6,7 @@ RSpec.describe JwtAuthenticatable do
       include JwtAuthenticatable
       
       # privateメソッドをテスト用にpublicにする
-      public :encode_token, :decode_token, :current_user, :extract_token_from_header
+      public :encode_token, :decode_token, :current_user, :extract_token_from_header, :logged_in?, :authenticate_user!
     end
   end
   
@@ -142,6 +142,98 @@ RSpec.describe JwtAuthenticatable do
       it 'returns nil' do
         token = controller.extract_token_from_header
         expect(token).to be_nil
+      end
+    end
+
+    context 'with empty Bearer token' do
+      let(:headers) { { 'Authorization' => 'Bearer token' } }
+
+      before do
+        allow(controller).to receive(:request).and_return(double('request', headers: headers))
+      end
+
+      it 'returns the token' do
+        token = controller.extract_token_from_header
+        expect(token).to eq('token')
+      end
+    end
+
+    context 'with malformed Authorization header' do
+      let(:headers) { { 'Authorization' => 'Bearer' } }
+
+      before do
+        allow(controller).to receive(:request).and_return(double('request', headers: headers))
+      end
+
+      it 'returns nil because it does not start with Bearer ' do
+        token = controller.extract_token_from_header
+        expect(token).to be_nil
+      end
+    end
+  end
+
+  describe '#logged_in?' do
+    context 'when user is authenticated' do
+      let(:token) { controller.encode_token(user_id: user.id) }
+      let(:headers) { { 'Authorization' => "Bearer #{token}" } }
+
+      before do
+        allow(controller).to receive(:request).and_return(double('request', headers: headers))
+      end
+
+      it 'returns true' do
+        expect(controller.logged_in?).to be true
+      end
+    end
+
+    context 'when user is not authenticated' do
+      let(:headers) { {} }
+
+      before do
+        allow(controller).to receive(:request).and_return(double('request', headers: headers))
+      end
+
+      it 'returns false' do
+        expect(controller.logged_in?).to be false
+      end
+    end
+  end
+
+  describe '#authenticate_user!' do
+    let(:response_double) { double('response') }
+
+    before do
+      allow(controller).to receive(:render)
+      allow(controller).to receive(:response).and_return(response_double)
+    end
+
+    context 'when user is authenticated' do
+      let(:token) { controller.encode_token(user_id: user.id) }
+      let(:headers) { { 'Authorization' => "Bearer #{token}" } }
+
+      before do
+        allow(controller).to receive(:request).and_return(double('request', headers: headers))
+      end
+
+      it 'does not render error' do
+        controller.authenticate_user!
+        expect(controller).not_to have_received(:render)
+      end
+    end
+
+    context 'when user is not authenticated' do
+      let(:headers) { {} }
+
+      before do
+        allow(controller).to receive(:request).and_return(double('request', headers: headers))
+      end
+
+      it 'renders unauthorized error' do
+        controller.authenticate_user!
+        expect(controller).to have_received(:render).with(
+          json: { error: 'Unauthorized' }, 
+          status: :unauthorized
+        )
       end
     end
   end

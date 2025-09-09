@@ -11,7 +11,7 @@ class Api::V1::UsersController < ApplicationController
     else
       render json: {
         errors: @user.errors.full_messages
-      }, status: :unprocessable_entity
+      }, status: :unprocessable_content
     end
   end
 

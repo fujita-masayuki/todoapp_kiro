@@ -52,9 +52,9 @@ RSpec.describe 'Api::V1::Users', type: :request do
         }.not_to change(User, :count)
       end
 
-      it 'returns unprocessable entity status' do
+      it 'returns unprocessable content status' do
         post '/api/v1/users', params: invalid_params, as: :json
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
       end
 
       it 'returns error messages' do
@@ -87,9 +87,9 @@ RSpec.describe 'Api::V1::Users', type: :request do
         }.not_to change(User, :count)
       end
 
-      it 'returns unprocessable entity status' do
+      it 'returns unprocessable content status' do
         post '/api/v1/users', params: duplicate_params, as: :json
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
       end
 
       it 'returns email validation error' do

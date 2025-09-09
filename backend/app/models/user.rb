@@ -7,7 +7,7 @@ class User < ApplicationRecord
   validates :password, length: { minimum: 8 }, if: -> { new_record? || !password.nil? }
   validates :password, format: { 
     with: /\A(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
-    message: "must include at least one lowercase letter, one uppercase letter, one digit, and one special character"
+    message: "は大文字・小文字・数字・特殊文字（@$!%*?&）をそれぞれ1文字以上含む必要があります"
   }, if: -> { new_record? || !password.nil? }
   
   before_save { self.email = email.downcase }

@@ -39,6 +39,10 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
       errors.push('数字を1文字以上含む必要があります');
     }
     
+    if (!/[@$!%*?&]/.test(password)) {
+      errors.push('特殊文字（@$!%*?&）を1文字以上含む必要があります');
+    }
+    
     return errors;
   };
 
@@ -119,7 +123,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
     if (!password) return { strength: 0, label: '', color: '' };
     
     const errors = validatePassword(password);
-    const strength = Math.max(0, 4 - errors.length);
+    const strength = Math.max(0, 5 - errors.length);
     
     switch (strength) {
       case 0:
@@ -128,9 +132,11 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
       case 2:
         return { strength, label: '普通', color: '#ffc107' };
       case 3:
-        return { strength, label: '良い', color: '#17a2b8' };
+        return { strength, label: '良い', color: '#fd7e14' };
       case 4:
-        return { strength, label: '強い', color: '#28a745' };
+        return { strength, label: '強い', color: '#17a2b8' };
+      case 5:
+        return { strength, label: '非常に強い', color: '#28a745' };
       default:
         return { strength: 0, label: '', color: '' };
     }
@@ -185,7 +191,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
                   <div 
                     className="password-strength-fill"
                     style={{ 
-                      width: `${(passwordStrength.strength / 4) * 100}%`,
+                      width: `${(passwordStrength.strength / 5) * 100}%`,
                       backgroundColor: passwordStrength.color
                     }}
                   />
@@ -203,7 +209,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
             )}
             <div className="password-requirements">
               <small>
-                パスワードは8文字以上で、大文字・小文字・数字をそれぞれ1文字以上含む必要があります
+                パスワードは8文字以上で、大文字・小文字・数字・特殊文字（@$!%*?&）をそれぞれ1文字以上含む必要があります
               </small>
             </div>
           </div>

@@ -30,7 +30,7 @@ const ERROR_MESSAGES: { [key: string]: string } = {
   'email_taken': 'このメールアドレスは既に登録されています',
   'email_invalid': '有効なメールアドレスを入力してください',
   'password_too_short': 'パスワードは8文字以上である必要があります',
-  'password_weak': 'パスワードは大文字・小文字・数字をそれぞれ1文字以上含む必要があります',
+  'password_weak': 'パスワードは大文字・小文字・数字・特殊文字（@$!%*?&）をそれぞれ1文字以上含む必要があります',
   
   // ネットワーク関連
   'network_error': 'ネットワークエラーが発生しました。接続を確認してください',
@@ -153,6 +153,8 @@ export const handleValidationErrors = (error: any): ValidationErrors => {
           errorMessage = ERROR_MESSAGES.email_invalid;
         } else if (field === 'password' && fieldErrors.includes('is too short')) {
           errorMessage = ERROR_MESSAGES.password_too_short;
+        } else if (field === 'password' && fieldErrors.some(err => err.includes('must include'))) {
+          errorMessage = ERROR_MESSAGES.password_weak;
         }
         
         validationErrors[field] = errorMessage;
