@@ -1,8 +1,12 @@
 class Api::V1::TodosController < ApplicationController
+  include JwtAuthenticatable
+  
+  before_action :authenticate_user!
   before_action :set_todo, only: [:show, :update, :destroy]
+  before_action :authorize_todo_access, only: [:show, :update, :destroy]
 
   def index
-    @todos = Todo.all
+    @todos = current_user.todos
     render json: @todos
   end
 
@@ -11,7 +15,7 @@ class Api::V1::TodosController < ApplicationController
   end
 
   def create
-    @todo = Todo.new(todo_params)
+    @todo = current_user.todos.build(todo_params)
     
     if @todo.save
       render json: @todo, status: :created
@@ -36,7 +40,16 @@ class Api::V1::TodosController < ApplicationController
   private
 
   def set_todo
-    @todo = Todo.find(params[:id])
+    @todo = current_user.todos.find_by(id: params[:id])
+    unless @todo
+      render json: { error: 'Todo not found' }, status: :not_found
+    end
+  end
+
+  def authorize_todo_access
+    unless @todo && @todo.user_id == current_user.id
+      render json: { error: 'Forbidden: You can only access your own todos' }, status: :forbidden
+    end
   end
 
   def todo_params
