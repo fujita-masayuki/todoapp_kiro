@@ -8,6 +8,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
   loading: boolean;
   isAuthenticated: boolean;
   setAuthData: (userData: User, authToken: string) => void;
@@ -107,6 +108,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const deleteAccount = async (): Promise<void> => {
+    if (!user) {
+      throw new Error('ユーザーがログインしていません');
+    }
+    
+    try {
+      await authApi.deleteAccount(user.id);
+      // 削除成功後、認証状態をクリア
+      setUser(null);
+      setToken(null);
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(USER_KEY);
+    } catch (error) {
+      throw error;
+    }
+  };
+
   // 認証状態を永続化するヘルパー関数
   const setAuthData = (userData: User, authToken: string) => {
     setUser(userData);
@@ -121,6 +139,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     login,
     register,
     logout,
+    deleteAccount,
     loading,
     isAuthenticated: !!user && !!token,
     setAuthData,

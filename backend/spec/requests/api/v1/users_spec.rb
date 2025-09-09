@@ -100,4 +100,96 @@ RSpec.describe 'Api::V1::Users', type: :request do
       end
     end
   end
+
+  describe 'DELETE /api/v1/users/:id' do
+    let(:user) { create(:user, email: 'test@example.com', password: 'Password123!') }
+    let(:other_user) { create(:user, email: 'other@example.com', password: 'Password123!') }
+    
+    before do
+      # ユーザーにTodoを作成
+      create_list(:todo, 3, user: user)
+    end
+
+    context 'when authenticated user deletes their own account' do
+      before do
+        token = encode_token({ user_id: user.id })
+        request.headers['Authorization'] = "Bearer #{token}"
+      end
+
+      it 'deletes the user' do
+        expect {
+          delete "/api/v1/users/#{user.id}", as: :json
+        }.to change(User, :count).by(-1)
+      end
+
+      it 'deletes associated todos' do
+        expect {
+          delete "/api/v1/users/#{user.id}", as: :json
+        }.to change(Todo, :count).by(-3)
+      end
+
+      it 'returns success message' do
+        delete "/api/v1/users/#{user.id}", as: :json
+        expect(response).to have_http_status(:ok)
+        
+        response_body = JSON.parse(response.body)
+        expect(response_body['message']).to eq('Account successfully deleted')
+      end
+    end
+
+    context 'when user tries to delete another user\'s account' do
+      before do
+        token = encode_token({ user_id: user.id })
+        request.headers['Authorization'] = "Bearer #{token}"
+      end
+
+      it 'does not delete the other user' do
+        expect {
+          delete "/api/v1/users/#{other_user.id}", as: :json
+        }.not_to change(User, :count)
+      end
+
+      it 'returns forbidden status' do
+        delete "/api/v1/users/#{other_user.id}", as: :json
+        expect(response).to have_http_status(:forbidden)
+      end
+
+      it 'returns error message' do
+        delete "/api/v1/users/#{other_user.id}", as: :json
+        
+        response_body = JSON.parse(response.body)
+        expect(response_body['error']).to eq('You can only delete your own account')
+      end
+    end
+
+    context 'when user is not authenticated' do
+      it 'returns unauthorized status' do
+        delete "/api/v1/users/#{user.id}", as: :json
+        expect(response).to have_http_status(:unauthorized)
+      end
+
+      it 'does not delete the user' do
+        expect {
+          delete "/api/v1/users/#{user.id}", as: :json
+        }.not_to change(User, :count)
+      end
+    end
+
+    context 'when token is invalid' do
+      before do
+        request.headers['Authorization'] = 'Bearer invalid_token'
+      end
+
+      it 'returns unauthorized status' do
+        delete "/api/v1/users/#{user.id}", as: :json
+        expect(response).to have_http_status(:unauthorized)
+      end
+
+      it 'does not delete the user' do
+        expect {
+          delete "/api/v1/users/#{user.id}", as: :json
+        }.not_to change(User, :count)
+      end
+    end
+  end
 end

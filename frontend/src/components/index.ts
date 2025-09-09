@@ -6,3 +6,4 @@ export { default as Navbar } from './Navbar';
 export { default as NotificationContainer } from './NotificationContainer';
 export { default as LoadingSpinner } from './LoadingSpinner';
 export { default as ErrorBoundary } from './ErrorBoundary';
+export { DeleteAccountModal } from './DeleteAccountModal';

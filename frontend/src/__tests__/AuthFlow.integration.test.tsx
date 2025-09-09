@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
 import App from '../App';
 
@@ -277,6 +278,131 @@ describe('認証フロー統合テスト', () => {
     });
 
     // ナビゲーションバーにユーザー情報が表示されることを確認
+    expect(screen.getByText('test@example.com')).toBeInTheDocument();
+  });
+
+  it('アカウント削除フローが正常に動作する', async () => {
+    const user = userEvent.setup();
+    
+    // ログイン状態を設定
+    const mockUser = { id: 1, email: 'test@example.com', created_at: '2023-01-01' };
+    localStorageMock.getItem.mockImplementation((key: string) => {
+      if (key === 'auth_token') return 'valid-token';
+      if (key === 'auth_user') return JSON.stringify(mockUser);
+      return null;
+    });
+
+    // Todos API のモック
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => [],
+    });
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Todo アプリ')).toBeInTheDocument();
+    });
+
+    // アカウント削除ボタンをクリック
+    const deleteButton = screen.getByText('アカウント削除');
+    await user.click(deleteButton);
+
+    // モーダルが開くことを確認
+    await waitFor(() => {
+      expect(screen.getByText(/この操作は取り消すことができません/)).toBeInTheDocument();
+    });
+
+    // 確認テキストを入力
+    const confirmationInput = screen.getByPlaceholderText('DELETE');
+    await user.type(confirmationInput, 'DELETE');
+
+    // アカウント削除APIのモック
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ message: 'Account successfully deleted' }),
+    });
+
+    // 削除ボタンをクリック
+    const modalDeleteButton = screen.getByText('アカウントを削除');
+    await user.click(modalDeleteButton);
+
+    // 削除APIが呼ばれることを確認
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith(
+        'http://localhost:3001/api/v1/users/1',
+        expect.objectContaining({
+          method: 'DELETE',
+          headers: expect.objectContaining({
+            'Authorization': 'Bearer valid-token',
+          }),
+        })
+      );
+    });
+
+    // ログインページにリダイレクトされることを確認
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'ログイン' })).toBeInTheDocument();
+    });
+
+    // 認証情報がクリアされることを確認
+    expect(localStorageMock.removeItem).toHaveBeenCalledWith('auth_token');
+    expect(localStorageMock.removeItem).toHaveBeenCalledWith('auth_user');
+  });
+
+  it('アカウント削除時のエラーハンドリングが正常に動作する', async () => {
+    const user = userEvent.setup();
+    
+    // ログイン状態を設定
+    const mockUser = { id: 1, email: 'test@example.com', created_at: '2023-01-01' };
+    localStorageMock.getItem.mockImplementation((key: string) => {
+      if (key === 'auth_token') return 'valid-token';
+      if (key === 'auth_user') return JSON.stringify(mockUser);
+      return null;
+    });
+
+    // Todos API のモック
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => [],
+    });
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Todo アプリ')).toBeInTheDocument();
+    });
+
+    // アカウント削除ボタンをクリック
+    const deleteButton = screen.getByText('アカウント削除');
+    await user.click(deleteButton);
+
+    // モーダルが開くことを確認
+    await waitFor(() => {
+      expect(screen.getByText(/この操作は取り消すことができません/)).toBeInTheDocument();
+    });
+
+    // 確認テキストを入力
+    const confirmationInput = screen.getByPlaceholderText('DELETE');
+    await user.type(confirmationInput, 'DELETE');
+
+    // アカウント削除APIのエラーモック
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      json: async () => ({ error: 'Internal server error' }),
+    });
+
+    // 削除ボタンをクリック
+    const modalDeleteButton = screen.getByText('アカウントを削除');
+    await user.click(modalDeleteButton);
+
+    // エラーメッセージが表示されることを確認
+    await waitFor(() => {
+      expect(screen.getByText('Internal server error')).toBeInTheDocument();
+    });
+
+    // ユーザーがログイン状態を維持することを確認
     expect(screen.getByText('test@example.com')).toBeInTheDocument();
   });
 });

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { render, screen, waitFor, act } from '@testing-library/react';
 import { AuthProvider, useAuth } from '../AuthContext';
 
@@ -223,4 +223,176 @@ describe('AuthContext', () => {
     // console.errorを復元
     console.error = originalConsoleError;
   });
+
+  it('handles deleteAccount successfully', async () => {
+    const mockUser = { id: 1, email: 'test@example.com', created_at: '2023-01-01' };
+    
+    // Set up initial authenticated state
+    localStorageMock.getItem.mockImplementation((key) => {
+      if (key === 'auth_token') return 'mock-token';
+      if (key === 'auth_user') return JSON.stringify(mockUser);
+      return null;
+    });
+
+    render(
+      <AuthProvider>
+        <TestComponentWithDeleteAccount />
+      </AuthProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('user')).toHaveTextContent('test@example.com');
+    });
+
+    // Mock deleteAccount API call
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ message: 'Account successfully deleted' }),
+    });
+
+    await act(async () => {
+      screen.getByText('DeleteAccount').click();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('user')).toHaveTextContent('no-user');
+    });
+
+    expect(localStorageMock.removeItem).toHaveBeenCalledWith('auth_token');
+    expect(localStorageMock.removeItem).toHaveBeenCalledWith('auth_user');
+    
+    // APIが正しいURLとメソッドで呼ばれることを確認
+    expect(global.fetch).toHaveBeenCalledWith(
+      'http://localhost:3001/api/v1/users/1',
+      expect.objectContaining({
+        method: 'DELETE',
+        headers: expect.objectContaining({
+          'Authorization': 'Bearer mock-token',
+        }),
+      })
+    );
+  });
+
+  it('throws error when deleteAccount is called without user', async () => {
+    const TestComponentWithError: React.FC = () => {
+      const { user, deleteAccount } = useAuth();
+      const [error, setError] = useState<string | null>(null);
+
+      const handleDeleteAccount = async () => {
+        try {
+          await deleteAccount();
+        } catch (e: any) {
+          setError(e.message);
+        }
+      };
+
+      return (
+        <div>
+          <div data-testid="user">
+            {user ? user.email : 'no-user'}
+          </div>
+          <div data-testid="error">{error}</div>
+          <button onClick={handleDeleteAccount}>DeleteAccount</button>
+        </div>
+      );
+    };
+
+    render(
+      <AuthProvider>
+        <TestComponentWithError />
+      </AuthProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('user')).toHaveTextContent('no-user');
+    });
+
+    await act(async () => {
+      screen.getByText('DeleteAccount').click();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('error')).toHaveTextContent('ユーザーがログインしていません');
+    });
+  });
+
+  it('handles deleteAccount API failure', async () => {
+    const mockUser = { id: 1, email: 'test@example.com', created_at: '2023-01-01' };
+    
+    // Set up initial authenticated state
+    localStorageMock.getItem.mockImplementation((key) => {
+      if (key === 'auth_token') return 'mock-token';
+      if (key === 'auth_user') return JSON.stringify(mockUser);
+      return null;
+    });
+
+    const TestComponentWithError: React.FC = () => {
+      const { user, deleteAccount } = useAuth();
+      const [error, setError] = useState<string | null>(null);
+
+      const handleDeleteAccount = async () => {
+        try {
+          await deleteAccount();
+        } catch (e: any) {
+          setError(e.message);
+        }
+      };
+
+      return (
+        <div>
+          <div data-testid="user">
+            {user ? user.email : 'no-user'}
+          </div>
+          <div data-testid="error">{error}</div>
+          <button onClick={handleDeleteAccount}>DeleteAccount</button>
+        </div>
+      );
+    };
+
+    render(
+      <AuthProvider>
+        <TestComponentWithError />
+      </AuthProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('user')).toHaveTextContent('test@example.com');
+    });
+
+    // Mock deleteAccount API failure
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      json: async () => ({ error: 'Internal server error' }),
+    });
+
+    await act(async () => {
+      screen.getByText('DeleteAccount').click();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('error')).toHaveTextContent('Internal server error');
+    });
+
+    // User should still be logged in since deletion failed
+    expect(screen.getByTestId('user')).toHaveTextContent('test@example.com');
+  });
 });
+
+// Test component that includes deleteAccount functionality
+const TestComponentWithDeleteAccount: React.FC = () => {
+  const { user, deleteAccount } = useAuth();
+
+  const handleDeleteAccount = async () => {
+    await deleteAccount();
+  };
+
+  return (
+    <div>
+      <div data-testid="user">
+        {user ? user.email : 'no-user'}
+      </div>
+      <button onClick={handleDeleteAccount}>DeleteAccount</button>
+    </div>
+  );
+};

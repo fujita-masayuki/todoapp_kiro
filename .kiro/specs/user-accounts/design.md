@@ -48,7 +48,7 @@ end
 
 #### 2. 認証コントローラー
 - `Api::V1::SessionsController` - ログイン/ログアウト
-- `Api::V1::UsersController` - ユーザー登録
+- `Api::V1::UsersController` - ユーザー登録・削除
 
 #### 3. 認証ミドルウェア
 - JWTトークンの検証
@@ -60,6 +60,11 @@ end
 - Todo作成時にuser_idを自動設定
 - 他のユーザーのTodoへのアクセスを防止
 
+#### 5. アカウント削除機能
+- `DELETE /api/v1/users/:id` エンドポイント
+- ユーザーアカウントと関連Todoの完全削除
+- 削除前の認証確認
+
 ### フロントエンドコンポーネント
 
 #### 1. 認証コンテキスト
@@ -69,6 +74,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
   logout: () => void;
+  deleteAccount: () => Promise<void>;
   loading: boolean;
 }
 ```
@@ -80,10 +86,14 @@ interface AuthContextType {
 
 #### 3. ナビゲーションコンポーネント
 - `Navbar` - 認証状態に応じたナビゲーション
-- ログイン済み: ユーザーメール + ログアウトボタン
+- ログイン済み: ユーザーメール + ログアウトボタン + アカウント削除ボタン
 - 未ログイン: ログイン + 登録リンク
 
-#### 4. 保護されたルート
+#### 4. アカウント削除コンポーネント
+- `DeleteAccountButton` - アカウント削除ボタン
+- `DeleteAccountModal` - 削除確認ダイアログ
+
+#### 5. 保護されたルート
 - `ProtectedRoute` - 認証が必要なページを保護
 - 未認証ユーザーをログインページにリダイレクト
 
@@ -103,8 +113,13 @@ CREATE TABLE users (
 ### Todos テーブル（更新）
 ```sql
 ALTER TABLE todos ADD COLUMN user_id BIGINT NOT NULL;
-ALTER TABLE todos ADD FOREIGN KEY (user_id) REFERENCES users(id);
+ALTER TABLE todos ADD FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
 ```
+
+### データ削除戦略
+- ユーザー削除時に関連するすべてのTodoを自動削除（CASCADE）
+- 削除操作はトランザクション内で実行
+- 削除前の認証確認必須
 
 ### TypeScript型定義
 

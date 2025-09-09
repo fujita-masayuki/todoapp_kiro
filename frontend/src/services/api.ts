@@ -135,6 +135,30 @@ export const authApi = {
     }
   },
 
+  async deleteAccount(userId: number): Promise<void> {
+    try {
+      const response = await apiClient.fetch(`${API_BASE_URL}/users/${userId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const error = new Error(errorData.error || 'アカウントの削除に失敗しました');
+        (error as any).response = { status: response.status, data: errorData };
+        throw error;
+      }
+    } catch (error) {
+      const apiError = handleApiError(error);
+      const enhancedError = new Error(apiError.message);
+      (enhancedError as any).response = (error as any).response;
+      (enhancedError as any).apiError = apiError;
+      throw enhancedError;
+    } finally {
+      // アカウント削除後はトークンをクリア
+      apiClient.setToken(null);
+    }
+  },
+
   // トークンを設定する関数（AuthContextから呼び出される）
   setToken(token: string | null) {
     apiClient.setToken(token);

@@ -9,7 +9,7 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
       resources :todos, only: [:index, :show, :create, :update, :destroy]
-      resources :users, only: [:create]
+      resources :users, only: [:create, :destroy]
       resources :sessions, only: [:create, :destroy]
       resource :profile, only: [:show, :update], controller: 'profile'
     end

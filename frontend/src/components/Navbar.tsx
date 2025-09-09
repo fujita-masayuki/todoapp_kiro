@@ -3,12 +3,14 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
 import LoadingSpinner from './LoadingSpinner';
+import { DeleteAccountModal } from './DeleteAccountModal';
 
 const Navbar: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { showSuccess, showError } = useNotification();
   const [loggingOut, setLoggingOut] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const handleLogout = async () => {
     setLoggingOut(true);
@@ -37,14 +39,24 @@ const Navbar: React.FC = () => {
           {isAuthenticated ? (
             <div className="navbar-auth">
               <span className="navbar-user-email">{user?.email}</span>
-              <button 
-                onClick={handleLogout}
-                className="btn btn-outline navbar-logout"
-                disabled={loggingOut}
-              >
-                {loggingOut && <LoadingSpinner size="small" />}
-                {loggingOut ? 'ログアウト中...' : 'ログアウト'}
-              </button>
+              <div className="navbar-buttons">
+                <button 
+                  onClick={() => setShowDeleteModal(true)}
+                  className="btn btn-danger navbar-delete-account"
+                  disabled={loggingOut}
+                  style={{ marginRight: '8px' }}
+                >
+                  アカウント削除
+                </button>
+                <button 
+                  onClick={handleLogout}
+                  className="btn btn-outline navbar-logout"
+                  disabled={loggingOut}
+                >
+                  {loggingOut && <LoadingSpinner size="small" />}
+                  {loggingOut ? 'ログアウト中...' : 'ログアウト'}
+                </button>
+              </div>
             </div>
           ) : (
             <div className="navbar-links">
@@ -58,6 +70,11 @@ const Navbar: React.FC = () => {
           )}
         </div>
       </div>
+      
+      <DeleteAccountModal 
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+      />
     </nav>
   );
 };
