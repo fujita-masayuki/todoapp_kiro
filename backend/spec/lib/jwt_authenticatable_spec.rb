@@ -1,0 +1,148 @@
+require 'rails_helper'
+
+RSpec.describe JwtAuthenticatable do
+  let(:dummy_controller) do
+    Class.new(ApplicationController) do
+      include JwtAuthenticatable
+      
+      # privateメソッドをテスト用にpublicにする
+      public :encode_token, :decode_token, :current_user, :extract_token_from_header
+    end
+  end
+  
+  let(:controller) { dummy_controller.new }
+  let(:user) { create(:user) }
+
+  before do
+    # requestオブジェクトをモック
+    allow(controller).to receive(:request).and_return(double('request', headers: {}))
+  end
+
+  describe '#encode_token' do
+    it 'encodes a JWT token with user_id' do
+      token = controller.encode_token(user_id: user.id)
+      expect(token).to be_a(String)
+      expect(token.split('.').length).to eq(3) # JWT has 3 parts
+    end
+
+    it 'includes expiration time' do
+      token = controller.encode_token(user_id: user.id)
+      decoded = JWT.decode(token, Rails.application.credentials.secret_key_base || 'fallback_secret_key', true, { algorithm: 'HS256' })
+      
+      expect(decoded[0]).to have_key('user_id')
+      expect(decoded[0]).to have_key('exp')
+      expect(decoded[0]['user_id']).to eq(user.id)
+    end
+  end
+
+  describe '#decode_token' do
+    let(:valid_token) { controller.encode_token(user_id: user.id) }
+
+    context 'with valid token' do
+      it 'decodes the token successfully' do
+        decoded = controller.decode_token(valid_token)
+        expect(decoded).to be_a(Hash)
+        expect(decoded['user_id']).to eq(user.id)
+      end
+    end
+
+    context 'with invalid token' do
+      it 'returns nil for malformed token' do
+        decoded = controller.decode_token('invalid.token.here')
+        expect(decoded).to be_nil
+      end
+
+      it 'returns nil for expired token' do
+        # Create an expired token
+        expired_payload = { user_id: user.id, exp: 1.hour.ago.to_i }
+        expired_token = JWT.encode(expired_payload, Rails.application.credentials.secret_key_base || 'fallback_secret_key', 'HS256')
+        
+        decoded = controller.decode_token(expired_token)
+        expect(decoded).to be_nil
+      end
+    end
+  end
+
+  describe '#current_user' do
+    context 'with valid authorization header' do
+      let(:token) { controller.encode_token(user_id: user.id) }
+      let(:headers) { { 'Authorization' => "Bearer #{token}" } }
+
+      before do
+        allow(controller).to receive(:request).and_return(double('request', headers: headers))
+      end
+
+      it 'returns the current user' do
+        current_user = controller.current_user
+        expect(current_user).to eq(user)
+      end
+    end
+
+    context 'without authorization header' do
+      let(:headers) { {} }
+
+      before do
+        allow(controller).to receive(:request).and_return(double('request', headers: headers))
+      end
+
+      it 'returns nil' do
+        current_user = controller.current_user
+        expect(current_user).to be_nil
+      end
+    end
+
+    context 'with invalid token' do
+      let(:headers) { { 'Authorization' => 'Bearer invalid.token.here' } }
+
+      before do
+        allow(controller).to receive(:request).and_return(double('request', headers: headers))
+      end
+
+      it 'returns nil' do
+        current_user = controller.current_user
+        expect(current_user).to be_nil
+      end
+    end
+  end
+
+  describe '#extract_token_from_header' do
+    context 'with valid Bearer token' do
+      let(:headers) { { 'Authorization' => 'Bearer abc123' } }
+
+      before do
+        allow(controller).to receive(:request).and_return(double('request', headers: headers))
+      end
+
+      it 'extracts the token' do
+        token = controller.extract_token_from_header
+        expect(token).to eq('abc123')
+      end
+    end
+
+    context 'without Authorization header' do
+      let(:headers) { {} }
+
+      before do
+        allow(controller).to receive(:request).and_return(double('request', headers: headers))
+      end
+
+      it 'returns nil' do
+        token = controller.extract_token_from_header
+        expect(token).to be_nil
+      end
+    end
+
+    context 'with invalid Authorization format' do
+      let(:headers) { { 'Authorization' => 'Basic abc123' } }
+
+      before do
+        allow(controller).to receive(:request).and_return(double('request', headers: headers))
+      end
+
+      it 'returns nil' do
+        token = controller.extract_token_from_header
+        expect(token).to be_nil
+      end
+    end
+  end
+end
