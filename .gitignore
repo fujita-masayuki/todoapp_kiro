@@ -10,9 +10,17 @@ backend/node_modules/
 backend/.byebug_history
 backend/.DS_Store
 
-# Rails credentials (keep encrypted files, ignore master key in production)
+# Rails credentials and secrets (keep encrypted files, ignore master key and secrets)
 backend/config/master.key
 backend/config/credentials/*.key
+backend/config/secrets.yml
+backend/config/database.yml.local
+backend/config/application.yml
+backend/.env*
+backend/.env.local
+backend/.env.development.local
+backend/.env.test.local
+backend/.env.production.local
 
 # Database
 backend/db/*.sqlite3
@@ -49,10 +57,36 @@ Thumbs.db
 # Docker
 .dockerignore
 
-# Environment variables
+# Environment variables and secrets
 .env
+.env.*
+*.env
 .env.local
 .env.*.local
+secrets.yml
+application.yml
+
+# SSL certificates and keys
+*.pem
+*.key
+*.crt
+*.csr
+*.p12
+*.pfx
+
+# SSH keys
+id_rsa
+id_dsa
+id_ecdsa
+id_ed25519
+*.pub
+
+# API keys and tokens
+*api_key*
+*secret*
+*token*
+*password*
+.secrets/
 
 # Logs
 *.log
